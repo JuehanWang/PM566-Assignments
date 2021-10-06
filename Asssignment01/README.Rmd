@@ -1,0 +1,207 @@
+---
+title: "Assignment 01 - Exploratory Data Analysis"
+author: "Juehan Wang"
+date: "9/15/2021"
+output: 
+    html_document:
+      toc: yes 
+      toc_float: yes 
+      keep_md: yes
+    github_document:
+      keep_html: true
+      html_preview: false
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Primary question:
+Whether daily concentrations of PM2.5 have decreased in California over the last 15 years (from 2004 to 2019).
+
+```{r, include=FALSE}
+library(htmltools)
+library(data.table)
+library(dplyr)
+library(lubridate)
+library(leaflet)
+library(ggplot2)
+```
+
+## Step 1
+
+### Read the data
+
+```{r read-data}
+ad_2004 <- data.table::fread("/Users/juehanwang/Desktop/566/Assignments/Data/ad_viz_plotval_data.csv")
+ad_2019 <- data.table::fread("/Users/juehanwang/Desktop/566/Assignments/Data/ad_viz_plotval_data (1).csv")
+```
+
+### Check the dimensions, headers, footers, variable names and variable types.
+
+```{r data-info}
+dim(ad_2004)
+head(ad_2004)
+tail(ad_2004)
+str(ad_2004)
+
+dim(ad_2019)
+head(ad_2019)
+tail(ad_2019)
+str(ad_2019)
+```
+
+### Take a closer look at the key variables.
+
+```{r key-variables}
+table(ad_2004$Date)
+table(ad_2004$`Site ID`)
+table(ad_2004$STATE)
+table(ad_2004$COUNTY)
+summary(ad_2004$`Daily Mean PM2.5 Concentration`)
+
+table(ad_2019$Date)
+table(ad_2019$`Site ID`)
+table(ad_2019$STATE)
+table(ad_2019$COUNTY)
+summary(ad_2019$`Daily Mean PM2.5 Concentration`)
+```
+
+## Step 2
+
+### Combine the two years of data into one data frame and do some cleaning.
+
+```{r combine-rename}
+# combine
+ad <- rbind(ad_2004,ad_2019)
+rm(ad_2004,ad_2019)
+
+# rename
+ad$date <- as.Date(ad$Date,'%m/%d/%Y')
+ad$Year <- as.numeric(format(ad$date,'%Y'))
+ad <- subset(ad,select=-c(date))
+
+names(ad)[grep("Daily Mean PM2.5 Concentration", colnames(ad))] <- "PM"
+names(ad)[grep("Site ID", colnames(ad))] <- "Site_ID"
+```
+
+## Step 3
+
+### Summarize the spatial distribution of the monitoring sites.
+
+```{r spatial-distribution}
+sd <- leaflet(ad) %>%
+    addProviderTiles('CartoDB.Positron') %>% 
+    addCircles(
+      data = ad[which(ad$Year==2004)],
+      lat = ~ad[which(ad$Year==2004)]$SITE_LATITUDE, lng = ~ad[which(ad$Year==2004)]$SITE_LONGITUDE,
+      popup = "2004 PM2.5", opacity = 1, fillOpacity = 1, radius = 400, color = "blue"
+      ) %>%
+    addCircles(
+      data = ad[which(ad$Year==2019)],
+      lat = ~ad[which(ad$Year==2019)]$SITE_LATITUDE, lng = ~ad[which(ad$Year==2019)]$SITE_LONGITUDE,
+      popup = "2019 PM2.5", opacity=0, fillOpacity=1, radius = 400, color = "red"
+      ) ;sd
+```
+
+In the plot of spatial distribution of the monitoring sites, sites in 2004 are represented with blue and those in 2019 are represented with smaller red points. From the plot we can conclude that sites in both 2004 and 2019 scattered all over the California. There were more sites in 2019 than in 2014 and the sites in 2019 covered more places.
+
+## Step 4
+
+### Temporal patterns of PM2.5
+
+### Check for any missing or implausible values of PM2.5 in the combined dataset.
+
+```{r values-checking-1}
+tapply(ad$PM,ad$Year,summary)
+#negative value
+filter(ad, ad$Year == "2004") %>% summarize(negative = mean(PM < 0, na.rm = TRUE))
+filter(ad, ad$Year == "2019") %>% summarize(negative = mean(PM < 0, na.rm = TRUE))
+```
+
+There is a relatively small proportion of values that are negative, which means that the negative values are reassuring.
+
+```{r values-checking-2}
+negative1 <- filter(ad, Year == "2004") %>% 
+    mutate(negative1 = PM < 0, date = mdy(Date)) %>%
+    select(Date, negative1)
+
+negative2 <- filter(ad, Year == "2019") %>% 
+    mutate(negative2 = PM < 0, date = mdy(Date)) %>%
+    select(Date, negative2)
+
+
+mutate(negative1, month = factor(month.name[month(mdy(ad[which(ad$Year==2004)]$Date))], levels = month.name)) %>%
+   group_by(month) %>%
+   summarize(pct.negative = mean(negative1, na.rm = TRUE) * 100)
+
+mutate(negative2, month = factor(month.name[month(mdy(ad[which(ad$Year==2019)]$Date))], levels = month.name)) %>%
+   group_by(month) %>%
+   summarize(pct.negative = mean(negative2, na.rm = TRUE) * 100)
+```
+
+From the table above it appears that bulk of the negative values occur in March, 2019. However, beyond that simple observation, it is not clear why the negative values occur. That said, given the relatively low proportion of negative values, we will ignore them for now.
+
+Also, we can see that the daily concentrations of PM2.5 decreased between 2004 to 2019.
+
+## Step 5
+
+```{r changes-overview}
+sites <- filter(ad, STATE_CODE == 6) %>% select(COUNTY_CODE, Site_ID, Year) %>% unique
+sites <- mutate(sites, site.code = paste(COUNTY_CODE, Site_ID, sep = "."))
+str(sites)
+
+site.year <- with(sites, split(site.code, Year))
+both <- intersect(site.year[[1]], site.year[[2]])
+print(both)
+
+count <- mutate(ad, site.code = paste(COUNTY_CODE, Site_ID, sep = ".")) %>% 
+   filter(site.code %in% both)
+
+group_by(count, site.code) %>% summarize(n = n())
+
+adsub <- filter(ad, STATE_CODE == "6" & COUNTY_CODE == "65" & Site_ID == "60659000") %>%
+  select(Date, Year, PM) %>%
+  mutate(Date = mdy(Date), yday = yday(Date))
+
+qplot(yday, PM, data = adsub, facets = . ~ Year, xlab = "Day of the year")
+```
+
+It seems that PM level went highest in the middle of the year. And it is much lower in 2019 than in 2004. 
+
+### Changes in state-wide PM levels
+
+```{r state-wide}
+staw <- group_by(ad, Year, STATE_CODE) %>% summarize(PM = mean(PM, na.rm = TRUE)) ;staw
+```
+
+The state-wide PM level dropped about `r round(staw[,3][[1]][1]-staw[,3][[1]][2],2)` from year 2004 to 2009.
+
+### Changes in county-wide PM levels
+
+```{r county-wide}
+cw <- group_by(ad, Year, COUNTY_CODE) %>% summarize(PM = mean(PM, na.rm = TRUE))
+head(cw)
+tail(cw)
+
+qplot(xyear, PM, data = mutate(cw, xyear = as.numeric(as.character(Year))), 
+  color = factor(COUNTY_CODE), 
+  geom = c("point", "line"))
+```
+
+It seems that the county-wide PM levels have dropped quite a lot from year 2004 to 2009.
+
+### Changes in site-wide PM levels
+
+```{r site-wide}
+sw <- group_by(ad, Year, "Site Name") %>% summarize(PM = mean(PM, na.rm = TRUE))
+head(sw)
+tail(sw)
+
+qplot(xyear, PM, data = mutate(sw, xyear = as.numeric(as.character(Year))), 
+  color = factor("Site Name"), 
+  geom = c("point", "line"))
+```
+
+It seems that the site-wide PM level has dropped quite a lot from year 2004 to 2009.
