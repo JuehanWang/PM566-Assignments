@@ -1,0 +1,255 @@
+---
+title: "Assignment 02 - Data Viz and Wrangling"
+author: "Juehan Wang"
+date: "10/4/2021"
+output: 
+    html_document:
+      toc: yes 
+      toc_float: yes
+      keep_md : yes 
+    github_document:
+      html_preview: false
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(data.table)
+library(tidyverse)
+library(tidytext)
+library(tibble)
+library(dplyr)
+```
+
+## Learning objectives
+
+Conducting data wrangling and visualize the data with key questions in mind.
+
+## I. Data Wrangling
+
+```{r download-datasets-merge, cache=TRUE}
+fn1 <- "chs_individual.csv"
+if (!file.exists(fn1))
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_individual.csv", destfile = fn1)
+
+chs_individual<-read.csv(fn1)
+chs_individual<-as_tibble(chs_individual)
+
+fn2 <- "chs_regional.csv"
+if (!file.exists(fn2))
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_regional.csv", destfile = fn2)
+
+chs_regional<-read.csv(fn2)
+chs_regional<-as_tibble(chs_regional)
+
+chs <- merge(
+  x = chs_individual,
+  y = chs_regional,
+  by = "townname"
+)
+```
+
+## Step 1
+
+After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches.
+
+In the case of missing values, impute data using the average within the variables “male” and “hispanic.”
+
+```{r imputation}
+summary(chs)
+#var <- c("agepft", "height", "weight", "bmi", "fev", "fvc", "mmef")
+#for (i in 1:length(var)){
+chs <- chs %>% 
+  group_by(male,race) %>% 
+  mutate( agepft = ifelse(is.na(agepft), 
+                         mean(agepft, na.rm = TRUE), 
+                         agepft)) %>%
+  mutate( height = ifelse(is.na(height), 
+                         mean(height, na.rm = TRUE), 
+                         height)) %>%
+  mutate( weight = ifelse(is.na(weight), 
+                         mean(weight, na.rm = TRUE), 
+                         weight)) %>%
+  mutate( bmi = ifelse(is.na(bmi), 
+                         mean(bmi, na.rm = TRUE), 
+                         bmi)) %>%
+  mutate( fev = ifelse(is.na(fev), 
+                         mean(fev, na.rm = TRUE), 
+                         fev)) %>%
+  mutate( fvc = ifelse(is.na(fvc), 
+                         mean(fvc, na.rm = TRUE), 
+                         fvc)) %>%
+  mutate( mmef = ifelse(is.na(mmef), 
+                         mean(mmef, na.rm = TRUE), 
+                         mmef)) %>%
+  mutate( no_24hr = ifelse(is.na(no_24hr), 
+                         mean(no_24hr, na.rm = TRUE), 
+                         no_24hr)) %>%
+  mutate( pm2_5_fr = ifelse(is.na(pm2_5_fr), 
+                         mean(pm2_5_fr, na.rm = TRUE), 
+                         pm2_5_fr))
+#}
+summary(chs)
+```
+
+The number of rows is correct in the merged data.
+
+All missing values in numeric variables have been imputed using the average within the variables “male” and “hispanic.”
+
+## Step 2
+
+Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24).
+
+To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+
+```{r obesity-level}
+chs$obesity_level <- as.factor(fifelse(chs$bmi < 14, "underweight",
+        fifelse(chs$bmi < 22, "normal",
+                fifelse(chs$bmi <= 24, "overweight", "obese"))))
+
+#chs[, obesity_level := as.factor(fifelse(bmi < 14, "underweight",
+#        fifelse(bmi < 22, "normal",
+#               fifelse(bmi <= 24, "overweight", "obese"))))]
+
+# summary table
+chs %>%
+  group_by(obesity_level) %>%
+  summarize(min_bmi = min(bmi),
+            max_bmi = max(bmi),
+            Count = n()) %>%
+  knitr::kable()
+```
+
+Due to the table, the variable "obesity_level" is rightly coded.
+
+## Step 3
+
+Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove”. The variable should have four categories in total.
+
+Note: smoke_gas_exposure: "smoke_gas" is both “Second Hand Smoke” and “Gas Stove”, "smoke" is only “Second Hand Smoke”, "gas" is only “Gas Stove” and "neither" is neither “Second Hand Smoke” nor “Gas Stove”.
+
+```{r smoke-gas-exposure}
+#chs[, smoke_gas_exposure := fifelse(smoke == 1, fifelse(gasstove == 1, "smoke_gas", "smoke", na=NA) , fifelse(gasstove == 1, "gas", "neither", na=NA), na=NA)]
+
+chs$smoke_gas_exposure <- as.factor(fifelse(chs$smoke == 1, fifelse(chs$gasstove == 1, "smoke_gas", "smoke", na=NA) , fifelse(chs$gasstove == 1, "gas", "neither", na=NA), na=NA))
+
+summary(chs$smoke_gas_exposure)
+```
+
+## Step 4
+
+Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure”.
+
+```{r summary-tables}
+# summary by town
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(townname,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+
+# summary by sex
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(male,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+
+# summary by obesity level
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(obesity_level,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+
+# summary by “smoke_gas_exposure”
+chs[-c(which(is.na(chs$smoke_gas_exposure)!="FALSE"),which(is.na(chs$asthma)!="FALSE")),] %>%
+  group_by(smoke_gas_exposure,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+```
+
+## II. Looking at the Data (EDA)
+
+The primary questions of interest are: 1. What is the association between BMI and FEV (forced expiatory volume)? 2. What is the association between smoke and gas exposure and FEV? 3. What is the association between PM2.5 exposure and FEV?
+
+Follow the EDA checklist from week 3 and the previous assignment. Be sure to focus on the key variables. Visualization Create the following figures and interpret them. Be sure to include easily understandable axes, titles, and legends.
+
+
+
+
+
+## Step 1
+
+Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
+
+```{r scatterplots}
+
+```
+
+
+
+## Step 2
+
+Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
+
+```{r histograms}
+
+```
+
+
+
+## Step 3
+
+Barchart of BMI by smoke/gas exposure.
+
+```{r Barchart}
+
+```
+
+
+
+## Step 4
+
+Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
+
+```{r summary-graphs}
+
+```
+
+
+
+## Step 5
+
+A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
+
+```{r map}
+
+```
+
+
+
+## Step 6
+
+Choose a visualization to examine whether PM2.5 mass is associated with FEV.
+
+```{r visualization-association}
+
+```
+

@@ -1,0 +1,557 @@
+---
+title: "Assignment 02 - Data Viz and Wrangling"
+author: "Juehan Wang"
+date: "10/4/2021"
+output: 
+    html_document:
+      toc: yes 
+      toc_float: yes
+      keep_md : yes 
+    github_document:
+      html_preview: false
+always_allow_html: true
+---
+
+
+
+
+
+## Learning objectives
+
+Conducting data wrangling and visualize the data with key questions in mind.
+
+## I. Data Wrangling
+
+
+```r
+fn1 <- "chs_individual.csv"
+if (!file.exists(fn1))
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_individual.csv", destfile = fn1)
+
+chs_individual<-read.csv(fn1)
+chs_individual<-as_tibble(chs_individual)
+
+fn2 <- "chs_regional.csv"
+if (!file.exists(fn2))
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_regional.csv", destfile = fn2)
+
+chs_regional<-read.csv(fn2)
+chs_regional<-as_tibble(chs_regional)
+
+chs <- merge(
+  x = chs_individual,
+  y = chs_regional,
+  by = "townname"
+)
+```
+
+## Step 1
+
+After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches.
+
+In the case of missing values, impute data using the average within the variables “male” and “hispanic.”
+
+
+```r
+summary(chs)
+```
+
+```
+##    townname              sid              male            race          
+##  Length:1200        Min.   :   1.0   Min.   :0.0000   Length:1200       
+##  Class :character   1st Qu.: 528.8   1st Qu.:0.0000   Class :character  
+##  Mode  :character   Median :1041.5   Median :0.0000   Mode  :character  
+##                     Mean   :1037.5   Mean   :0.4917                     
+##                     3rd Qu.:1554.2   3rd Qu.:1.0000                     
+##                     Max.   :2053.0   Max.   :1.0000                     
+##                                                                         
+##     hispanic          agepft           height        weight      
+##  Min.   :0.0000   Min.   : 8.961   Min.   :114   Min.   : 42.00  
+##  1st Qu.:0.0000   1st Qu.: 9.610   1st Qu.:135   1st Qu.: 65.00  
+##  Median :0.0000   Median : 9.906   Median :139   Median : 74.00  
+##  Mean   :0.4342   Mean   : 9.924   Mean   :139   Mean   : 79.33  
+##  3rd Qu.:1.0000   3rd Qu.:10.177   3rd Qu.:143   3rd Qu.: 89.00  
+##  Max.   :1.0000   Max.   :12.731   Max.   :165   Max.   :207.00  
+##                   NA's   :89       NA's   :89    NA's   :89      
+##       bmi            asthma       active_asthma  father_asthma    
+##  Min.   :11.30   Min.   :0.0000   Min.   :0.00   Min.   :0.00000  
+##  1st Qu.:15.78   1st Qu.:0.0000   1st Qu.:0.00   1st Qu.:0.00000  
+##  Median :17.48   Median :0.0000   Median :0.00   Median :0.00000  
+##  Mean   :18.50   Mean   :0.1463   Mean   :0.19   Mean   :0.08318  
+##  3rd Qu.:20.35   3rd Qu.:0.0000   3rd Qu.:0.00   3rd Qu.:0.00000  
+##  Max.   :41.27   Max.   :1.0000   Max.   :1.00   Max.   :1.00000  
+##  NA's   :89      NA's   :31                      NA's   :106      
+##  mother_asthma        wheeze          hayfever         allergy      
+##  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+##  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000  
+##  Median :0.0000   Median :0.0000   Median :0.0000   Median :0.0000  
+##  Mean   :0.1023   Mean   :0.3313   Mean   :0.1747   Mean   :0.2929  
+##  3rd Qu.:0.0000   3rd Qu.:1.0000   3rd Qu.:0.0000   3rd Qu.:1.0000  
+##  Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   :1.0000  
+##  NA's   :56       NA's   :71       NA's   :118      NA's   :63      
+##   educ_parent        smoke             pets           gasstove     
+##  Min.   :1.000   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+##  1st Qu.:2.000   1st Qu.:0.0000   1st Qu.:1.0000   1st Qu.:1.0000  
+##  Median :3.000   Median :0.0000   Median :1.0000   Median :1.0000  
+##  Mean   :2.797   Mean   :0.1638   Mean   :0.7667   Mean   :0.7815  
+##  3rd Qu.:3.000   3rd Qu.:0.0000   3rd Qu.:1.0000   3rd Qu.:1.0000  
+##  Max.   :5.000   Max.   :1.0000   Max.   :1.0000   Max.   :1.0000  
+##  NA's   :64      NA's   :40                        NA's   :33      
+##       fev              fvc            mmef          pm25_mass     
+##  Min.   : 984.8   Min.   : 895   Min.   : 757.6   Min.   : 5.960  
+##  1st Qu.:1809.0   1st Qu.:2041   1st Qu.:1994.0   1st Qu.: 7.615  
+##  Median :2022.7   Median :2293   Median :2401.5   Median :10.545  
+##  Mean   :2031.3   Mean   :2324   Mean   :2398.8   Mean   :14.362  
+##  3rd Qu.:2249.7   3rd Qu.:2573   3rd Qu.:2793.8   3rd Qu.:20.988  
+##  Max.   :3323.7   Max.   :3698   Max.   :4935.9   Max.   :29.970  
+##  NA's   :95       NA's   :97     NA's   :106                      
+##     pm25_so4        pm25_no3         pm25_nh4         pm25_oc      
+##  Min.   :0.790   Min.   : 0.730   Min.   :0.4100   Min.   : 1.450  
+##  1st Qu.:1.077   1st Qu.: 1.538   1st Qu.:0.7375   1st Qu.: 2.520  
+##  Median :1.815   Median : 2.525   Median :1.1350   Median : 4.035  
+##  Mean   :1.876   Mean   : 4.488   Mean   :1.7642   Mean   : 4.551  
+##  3rd Qu.:2.605   3rd Qu.: 7.338   3rd Qu.:2.7725   3rd Qu.: 5.350  
+##  Max.   :3.230   Max.   :12.200   Max.   :4.2500   Max.   :11.830  
+##                                                                    
+##     pm25_ec          pm25_om          pm10_oc          pm10_ec      
+##  Min.   :0.1300   Min.   : 1.740   Min.   : 1.860   Min.   :0.1400  
+##  1st Qu.:0.4000   1st Qu.: 3.020   1st Qu.: 3.228   1st Qu.:0.4100  
+##  Median :0.5850   Median : 4.840   Median : 5.170   Median :0.5950  
+##  Mean   :0.7358   Mean   : 5.460   Mean   : 5.832   Mean   :0.7525  
+##  3rd Qu.:1.1750   3rd Qu.: 6.418   3rd Qu.: 6.855   3rd Qu.:1.1975  
+##  Max.   :1.3600   Max.   :14.200   Max.   :15.160   Max.   :1.3900  
+##                                                                     
+##     pm10_tc           formic          acetic           hcl        
+##  Min.   : 1.990   Min.   :0.340   Min.   :0.750   Min.   :0.2200  
+##  1st Qu.: 3.705   1st Qu.:0.720   1st Qu.:2.297   1st Qu.:0.3250  
+##  Median : 6.505   Median :1.105   Median :2.910   Median :0.4350  
+##  Mean   : 6.784   Mean   :1.332   Mean   :3.010   Mean   :0.4208  
+##  3rd Qu.: 8.430   3rd Qu.:1.765   3rd Qu.:4.000   3rd Qu.:0.4625  
+##  Max.   :16.440   Max.   :2.770   Max.   :5.140   Max.   :0.7300  
+##                                                                   
+##       hno3           o3_max          o3106           o3_24      
+##  Min.   :0.430   Min.   :38.27   Min.   :28.22   Min.   :18.22  
+##  1st Qu.:1.593   1st Qu.:49.93   1st Qu.:41.90   1st Qu.:23.31  
+##  Median :2.455   Median :64.05   Median :46.74   Median :27.59  
+##  Mean   :2.367   Mean   :60.16   Mean   :47.76   Mean   :30.23  
+##  3rd Qu.:3.355   3rd Qu.:67.69   3rd Qu.:55.24   3rd Qu.:32.39  
+##  Max.   :4.070   Max.   :84.44   Max.   :67.01   Max.   :57.76  
+##                                                                 
+##       no2             pm10          no_24hr         pm2_5_fr    
+##  Min.   : 4.60   Min.   :18.40   Min.   : 2.05   Min.   : 9.01  
+##  1st Qu.:12.12   1st Qu.:20.71   1st Qu.: 4.74   1st Qu.:10.28  
+##  Median :16.40   Median :29.64   Median :12.68   Median :22.23  
+##  Mean   :18.99   Mean   :32.64   Mean   :16.21   Mean   :19.79  
+##  3rd Qu.:23.24   3rd Qu.:39.16   3rd Qu.:26.90   3rd Qu.:27.73  
+##  Max.   :37.97   Max.   :70.39   Max.   :42.95   Max.   :31.55  
+##                                  NA's   :100     NA's   :300    
+##      iacid           oacid        total_acids          lon        
+##  Min.   :0.760   Min.   :1.090   Min.   : 1.520   Min.   :-120.7  
+##  1st Qu.:1.835   1st Qu.:2.978   1st Qu.: 4.930   1st Qu.:-118.8  
+##  Median :2.825   Median :4.135   Median : 6.370   Median :-117.7  
+##  Mean   :2.788   Mean   :4.342   Mean   : 6.708   Mean   :-118.3  
+##  3rd Qu.:3.817   3rd Qu.:5.982   3rd Qu.: 9.395   3rd Qu.:-117.4  
+##  Max.   :4.620   Max.   :7.400   Max.   :11.430   Max.   :-116.8  
+##                                                                   
+##       lat       
+##  Min.   :32.84  
+##  1st Qu.:33.93  
+##  Median :34.10  
+##  Mean   :34.20  
+##  3rd Qu.:34.65  
+##  Max.   :35.49  
+## 
+```
+
+```r
+#var <- c("agepft", "height", "weight", "bmi", "fev", "fvc", "mmef")
+#for (i in 1:length(var)){
+chs <- chs %>% 
+  group_by(male,race) %>% 
+  mutate( agepft = ifelse(is.na(agepft), 
+                         mean(agepft, na.rm = TRUE), 
+                         agepft)) %>%
+  mutate( height = ifelse(is.na(height), 
+                         mean(height, na.rm = TRUE), 
+                         height)) %>%
+  mutate( weight = ifelse(is.na(weight), 
+                         mean(weight, na.rm = TRUE), 
+                         weight)) %>%
+  mutate( bmi = ifelse(is.na(bmi), 
+                         mean(bmi, na.rm = TRUE), 
+                         bmi)) %>%
+  mutate( fev = ifelse(is.na(fev), 
+                         mean(fev, na.rm = TRUE), 
+                         fev)) %>%
+  mutate( fvc = ifelse(is.na(fvc), 
+                         mean(fvc, na.rm = TRUE), 
+                         fvc)) %>%
+  mutate( mmef = ifelse(is.na(mmef), 
+                         mean(mmef, na.rm = TRUE), 
+                         mmef)) %>%
+  mutate( no_24hr = ifelse(is.na(no_24hr), 
+                         mean(no_24hr, na.rm = TRUE), 
+                         no_24hr)) %>%
+  mutate( pm2_5_fr = ifelse(is.na(pm2_5_fr), 
+                         mean(pm2_5_fr, na.rm = TRUE), 
+                         pm2_5_fr))
+#}
+summary(chs)
+```
+
+```
+##    townname              sid              male            race          
+##  Length:1200        Min.   :   1.0   Min.   :0.0000   Length:1200       
+##  Class :character   1st Qu.: 528.8   1st Qu.:0.0000   Class :character  
+##  Mode  :character   Median :1041.5   Median :0.0000   Mode  :character  
+##                     Mean   :1037.5   Mean   :0.4917                     
+##                     3rd Qu.:1554.2   3rd Qu.:1.0000                     
+##                     Max.   :2053.0   Max.   :1.0000                     
+##                                                                         
+##     hispanic          agepft           height        weight      
+##  Min.   :0.0000   Min.   : 8.961   Min.   :114   Min.   : 42.00  
+##  1st Qu.:0.0000   1st Qu.: 9.632   1st Qu.:135   1st Qu.: 66.00  
+##  Median :0.0000   Median : 9.903   Median :139   Median : 76.00  
+##  Mean   :0.4342   Mean   : 9.923   Mean   :139   Mean   : 79.35  
+##  3rd Qu.:1.0000   3rd Qu.:10.155   3rd Qu.:143   3rd Qu.: 87.00  
+##  Max.   :1.0000   Max.   :12.731   Max.   :165   Max.   :207.00  
+##                                                                  
+##       bmi            asthma       active_asthma  father_asthma    
+##  Min.   :11.30   Min.   :0.0000   Min.   :0.00   Min.   :0.00000  
+##  1st Qu.:15.96   1st Qu.:0.0000   1st Qu.:0.00   1st Qu.:0.00000  
+##  Median :17.77   Median :0.0000   Median :0.00   Median :0.00000  
+##  Mean   :18.51   Mean   :0.1463   Mean   :0.19   Mean   :0.08318  
+##  3rd Qu.:19.99   3rd Qu.:0.0000   3rd Qu.:0.00   3rd Qu.:0.00000  
+##  Max.   :41.27   Max.   :1.0000   Max.   :1.00   Max.   :1.00000  
+##                  NA's   :31                      NA's   :106      
+##  mother_asthma        wheeze          hayfever         allergy      
+##  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+##  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000  
+##  Median :0.0000   Median :0.0000   Median :0.0000   Median :0.0000  
+##  Mean   :0.1023   Mean   :0.3313   Mean   :0.1747   Mean   :0.2929  
+##  3rd Qu.:0.0000   3rd Qu.:1.0000   3rd Qu.:0.0000   3rd Qu.:1.0000  
+##  Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   :1.0000  
+##  NA's   :56       NA's   :71       NA's   :118      NA's   :63      
+##   educ_parent        smoke             pets           gasstove     
+##  Min.   :1.000   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+##  1st Qu.:2.000   1st Qu.:0.0000   1st Qu.:1.0000   1st Qu.:1.0000  
+##  Median :3.000   Median :0.0000   Median :1.0000   Median :1.0000  
+##  Mean   :2.797   Mean   :0.1638   Mean   :0.7667   Mean   :0.7815  
+##  3rd Qu.:3.000   3rd Qu.:0.0000   3rd Qu.:1.0000   3rd Qu.:1.0000  
+##  Max.   :5.000   Max.   :1.0000   Max.   :1.0000   Max.   :1.0000  
+##  NA's   :64      NA's   :40                        NA's   :33      
+##       fev              fvc            mmef          pm25_mass     
+##  Min.   : 984.8   Min.   : 895   Min.   : 757.6   Min.   : 5.960  
+##  1st Qu.:1818.0   1st Qu.:2055   1st Qu.:2041.6   1st Qu.: 7.615  
+##  Median :2015.9   Median :2282   Median :2387.2   Median :10.545  
+##  Mean   :2029.8   Mean   :2322   Mean   :2397.7   Mean   :14.362  
+##  3rd Qu.:2223.6   3rd Qu.:2551   3rd Qu.:2737.1   3rd Qu.:20.988  
+##  Max.   :3323.7   Max.   :3698   Max.   :4935.9   Max.   :29.970  
+##                                                                   
+##     pm25_so4        pm25_no3         pm25_nh4         pm25_oc      
+##  Min.   :0.790   Min.   : 0.730   Min.   :0.4100   Min.   : 1.450  
+##  1st Qu.:1.077   1st Qu.: 1.538   1st Qu.:0.7375   1st Qu.: 2.520  
+##  Median :1.815   Median : 2.525   Median :1.1350   Median : 4.035  
+##  Mean   :1.876   Mean   : 4.488   Mean   :1.7642   Mean   : 4.551  
+##  3rd Qu.:2.605   3rd Qu.: 7.338   3rd Qu.:2.7725   3rd Qu.: 5.350  
+##  Max.   :3.230   Max.   :12.200   Max.   :4.2500   Max.   :11.830  
+##                                                                    
+##     pm25_ec          pm25_om          pm10_oc          pm10_ec      
+##  Min.   :0.1300   Min.   : 1.740   Min.   : 1.860   Min.   :0.1400  
+##  1st Qu.:0.4000   1st Qu.: 3.020   1st Qu.: 3.228   1st Qu.:0.4100  
+##  Median :0.5850   Median : 4.840   Median : 5.170   Median :0.5950  
+##  Mean   :0.7358   Mean   : 5.460   Mean   : 5.832   Mean   :0.7525  
+##  3rd Qu.:1.1750   3rd Qu.: 6.418   3rd Qu.: 6.855   3rd Qu.:1.1975  
+##  Max.   :1.3600   Max.   :14.200   Max.   :15.160   Max.   :1.3900  
+##                                                                     
+##     pm10_tc           formic          acetic           hcl        
+##  Min.   : 1.990   Min.   :0.340   Min.   :0.750   Min.   :0.2200  
+##  1st Qu.: 3.705   1st Qu.:0.720   1st Qu.:2.297   1st Qu.:0.3250  
+##  Median : 6.505   Median :1.105   Median :2.910   Median :0.4350  
+##  Mean   : 6.784   Mean   :1.332   Mean   :3.010   Mean   :0.4208  
+##  3rd Qu.: 8.430   3rd Qu.:1.765   3rd Qu.:4.000   3rd Qu.:0.4625  
+##  Max.   :16.440   Max.   :2.770   Max.   :5.140   Max.   :0.7300  
+##                                                                   
+##       hno3           o3_max          o3106           o3_24      
+##  Min.   :0.430   Min.   :38.27   Min.   :28.22   Min.   :18.22  
+##  1st Qu.:1.593   1st Qu.:49.93   1st Qu.:41.90   1st Qu.:23.31  
+##  Median :2.455   Median :64.05   Median :46.74   Median :27.59  
+##  Mean   :2.367   Mean   :60.16   Mean   :47.76   Mean   :30.23  
+##  3rd Qu.:3.355   3rd Qu.:67.69   3rd Qu.:55.24   3rd Qu.:32.39  
+##  Max.   :4.070   Max.   :84.44   Max.   :67.01   Max.   :57.76  
+##                                                                 
+##       no2             pm10          no_24hr          pm2_5_fr    
+##  Min.   : 4.60   Min.   :18.40   Min.   : 2.050   Min.   : 9.01  
+##  1st Qu.:12.12   1st Qu.:20.71   1st Qu.: 6.487   1st Qu.:13.21  
+##  Median :16.40   Median :29.64   Median :13.832   Median :19.88  
+##  Mean   :18.99   Mean   :32.64   Mean   :16.180   Mean   :19.81  
+##  3rd Qu.:23.24   3rd Qu.:39.16   3rd Qu.:24.780   3rd Qu.:25.93  
+##  Max.   :37.97   Max.   :70.39   Max.   :42.950   Max.   :31.55  
+##                                                                  
+##      iacid           oacid        total_acids          lon        
+##  Min.   :0.760   Min.   :1.090   Min.   : 1.520   Min.   :-120.7  
+##  1st Qu.:1.835   1st Qu.:2.978   1st Qu.: 4.930   1st Qu.:-118.8  
+##  Median :2.825   Median :4.135   Median : 6.370   Median :-117.7  
+##  Mean   :2.788   Mean   :4.342   Mean   : 6.708   Mean   :-118.3  
+##  3rd Qu.:3.817   3rd Qu.:5.982   3rd Qu.: 9.395   3rd Qu.:-117.4  
+##  Max.   :4.620   Max.   :7.400   Max.   :11.430   Max.   :-116.8  
+##                                                                   
+##       lat       
+##  Min.   :32.84  
+##  1st Qu.:33.93  
+##  Median :34.10  
+##  Mean   :34.20  
+##  3rd Qu.:34.65  
+##  Max.   :35.49  
+## 
+```
+
+The number of rows is correct in the merged data.
+
+All missing values in numeric variables have been imputed using the average within the variables “male” and “hispanic.”
+
+## Step 2
+
+Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24).
+
+To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+
+
+```r
+chs$obesity_level <- as.factor(fifelse(chs$bmi < 14, "underweight",
+        fifelse(chs$bmi < 22, "normal",
+                fifelse(chs$bmi <= 24, "overweight", "obese"))))
+
+#chs[, obesity_level := as.factor(fifelse(bmi < 14, "underweight",
+#        fifelse(bmi < 22, "normal",
+#               fifelse(bmi <= 24, "overweight", "obese"))))]
+
+# summary table
+chs %>%
+  group_by(obesity_level) %>%
+  summarize(min_bmi = min(bmi),
+            max_bmi = max(bmi),
+            Count = n()) %>%
+  knitr::kable()
+```
+
+
+
+|obesity_level |  min_bmi|  max_bmi| Count|
+|:-------------|--------:|--------:|-----:|
+|normal        | 14.00380| 21.96387|   975|
+|obese         | 24.00647| 41.26613|   103|
+|overweight    | 22.02353| 23.99650|    87|
+|underweight   | 11.29640| 13.98601|    35|
+
+Due to the table, the variable "obesity_level" is rightly coded.
+
+## Step 3
+
+Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove”. The variable should have four categories in total.
+
+Note: smoke_gas_exposure: "smoke_gas" is both “Second Hand Smoke” and “Gas Stove”, "smoke" is only “Second Hand Smoke”, "gas" is only “Gas Stove” and "neither" is neither “Second Hand Smoke” nor “Gas Stove”.
+
+
+```r
+#chs[, smoke_gas_exposure := fifelse(smoke == 1, fifelse(gasstove == 1, "smoke_gas", "smoke", na=NA) , fifelse(gasstove == 1, "gas", "neither", na=NA), na=NA)]
+
+chs$smoke_gas_exposure <- as.factor(fifelse(chs$smoke == 1, fifelse(chs$gasstove == 1, "smoke_gas", "smoke", na=NA) , fifelse(chs$gasstove == 1, "gas", "neither", na=NA), na=NA))
+
+summary(chs$smoke_gas_exposure)
+```
+
+```
+##       gas   neither     smoke smoke_gas      NA's 
+##       739       214        36       151        60
+```
+
+## Step 4
+
+Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure”.
+
+
+```r
+# summary by town
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(townname,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+```
+
+```
+## `summarise()` has grouped output by 'townname'. You can override using the `.groups` argument.
+```
+
+
+
+|townname      | asthma| mean_fev|   sd_fev|  n| sd_asthma|      prop|
+|:-------------|------:|--------:|--------:|--:|---------:|---------:|
+|Alpine        |      0| 2092.228| 293.4587| 86|         0| 0.8865979|
+|Alpine        |      1| 2085.141| 310.4269| 11|         0| 0.1134021|
+|Atascadero    |      0| 2049.922| 311.3924| 73|         0| 0.7448980|
+|Atascadero    |      1| 2146.799| 366.8935| 25|         0| 0.2551020|
+|Lake Elsinore |      0| 2042.757| 308.7453| 83|         0| 0.8736842|
+|Lake Elsinore |      1| 2017.593| 327.6486| 12|         0| 0.1263158|
+|Lake Gregory  |      0| 2079.758| 334.5179| 84|         0| 0.8484848|
+|Lake Gregory  |      1| 2134.956| 234.0712| 15|         0| 0.1515152|
+|Lancaster     |      0| 1991.265| 314.5290| 81|         0| 0.8350515|
+|Lancaster     |      1| 2026.252| 359.8879| 16|         0| 0.1649485|
+|Lompoc        |      0| 2026.517| 340.6974| 86|         0| 0.8865979|
+|Lompoc        |      1| 2154.108| 454.1000| 11|         0| 0.1134021|
+|Long Beach    |      0| 2002.208| 318.5998| 83|         0| 0.8645833|
+|Long Beach    |      1| 1828.217| 321.9581| 13|         0| 0.1354167|
+|Mira Loma     |      0| 1990.093| 333.0477| 80|         0| 0.8421053|
+|Mira Loma     |      1| 2016.711| 274.5174| 15|         0| 0.1578947|
+|Riverside     |      0| 1980.251| 280.4520| 89|         0| 0.8900000|
+|Riverside     |      1| 1999.326| 304.9439| 11|         0| 0.1100000|
+|San Dimas     |      0| 2037.471| 316.0802| 82|         0| 0.8282828|
+|San Dimas     |      1| 2005.328| 329.9439| 17|         0| 0.1717172|
+|Santa Maria   |      0| 2022.677| 306.5195| 84|         0| 0.8659794|
+|Santa Maria   |      1| 2028.102| 387.1696| 13|         0| 0.1340206|
+|Upland        |      0| 2049.212| 350.6590| 87|         0| 0.8787879|
+|Upland        |      1| 1883.906| 252.0619| 12|         0| 0.1212121|
+
+```r
+# summary by sex
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(male,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+```
+
+```
+## `summarise()` has grouped output by 'male'. You can override using the `.groups` argument.
+```
+
+
+
+| male| asthma| mean_fev|   sd_fev|   n| sd_asthma|      prop|
+|----:|------:|--------:|--------:|---:|---------:|---------:|
+|    0|      0| 1950.996| 309.3914| 524|         0| 0.8791946|
+|    0|      1| 1998.886| 350.6306|  72|         0| 0.1208054|
+|    1|      0| 2118.074| 304.3312| 474|         0| 0.8272251|
+|    1|      1| 2061.720| 323.2065|  99|         0| 0.1727749|
+
+```r
+# summary by obesity level
+chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
+  group_by(obesity_level,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+```
+
+```
+## `summarise()` has grouped output by 'obesity_level'. You can override using the `.groups` argument.
+```
+
+
+
+|obesity_level | asthma| mean_fev|   sd_fev|   n| sd_asthma|      prop|
+|:-------------|------:|--------:|--------:|---:|---------:|---------:|
+|normal        |      0| 2003.525| 294.0708| 816|         0| 0.8598525|
+|normal        |      1| 1976.680| 317.5752| 133|         0| 0.1401475|
+|obese         |      0| 2260.178| 341.1480|  79|         0| 0.7900000|
+|obese         |      1| 2307.300| 283.9257|  21|         0| 0.2100000|
+|overweight    |      0| 2240.452| 305.8903|  71|         0| 0.8352941|
+|overweight    |      1| 2214.127| 347.3845|  14|         0| 0.1647059|
+|underweight   |      0| 1680.843| 306.3047|  32|         0| 0.9142857|
+|underweight   |      1| 1893.504| 243.1512|   3|         0| 0.0857143|
+
+```r
+# summary by “smoke_gas_exposure”
+chs[-c(which(is.na(chs$smoke_gas_exposure)!="FALSE"),which(is.na(chs$asthma)!="FALSE")),] %>%
+  group_by(smoke_gas_exposure,asthma) %>%
+  summarise(mean_fev = mean(fev),
+            sd_fev = sd(fev),
+            n = n(),
+            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
+  mutate(prop = prop.table(n)) %>%
+  knitr::kable()
+```
+
+```
+## `summarise()` has grouped output by 'smoke_gas_exposure'. You can override using the `.groups` argument.
+```
+
+
+
+|smoke_gas_exposure | asthma| mean_fev|   sd_fev|   n| sd_asthma|      prop|
+|:------------------|------:|--------:|--------:|---:|---------:|---------:|
+|gas                |      0| 2019.516| 316.2624| 623|         0| 0.8522572|
+|gas                |      1| 2068.178| 333.5512| 108|         0| 0.1477428|
+|neither            |      0| 2064.458| 328.8344| 179|         0| 0.8523810|
+|neither            |      1| 1994.697| 353.5578|  31|         0| 0.1476190|
+|smoke              |      0| 2089.872| 284.2463|  29|         0| 0.8285714|
+|smoke              |      1| 1923.935| 357.9601|   6|         0| 0.1714286|
+|smoke_gas          |      0| 2012.297| 305.1326| 127|         0| 0.8698630|
+|smoke_gas          |      1| 2025.715| 297.3824|  19|         0| 0.1301370|
+
+## II. Looking at the Data (EDA)
+
+The primary questions of interest are: 1. What is the association between BMI and FEV (forced expiatory volume)? 2. What is the association between smoke and gas exposure and FEV? 3. What is the association between PM2.5 exposure and FEV?
+
+Follow the EDA checklist from week 3 and the previous assignment. Be sure to focus on the key variables. Visualization Create the following figures and interpret them. Be sure to include easily understandable axes, titles, and legends.
+
+
+
+
+
+## Step 1
+
+Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
+
+
+
+
+
+## Step 2
+
+Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
+
+
+
+
+
+## Step 3
+
+Barchart of BMI by smoke/gas exposure.
+
+
+
+
+
+## Step 4
+
+Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
+
+
+
+
+
+## Step 5
+
+A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
+
+
+
+
+
+## Step 6
+
+Choose a visualization to examine whether PM2.5 mass is associated with FEV.
+
+
+
