@@ -22,6 +22,7 @@ library(tidyverse)
 library(tidytext)
 library(tibble)
 library(dplyr)
+library(leaflet)
 ```
 
 ## Learning objectives
@@ -110,10 +111,6 @@ chs$obesity_level <- as.factor(fifelse(chs$bmi < 14, "underweight",
         fifelse(chs$bmi < 22, "normal",
                 fifelse(chs$bmi <= 24, "overweight", "obese"))))
 
-#chs[, obesity_level := as.factor(fifelse(bmi < 14, "underweight",
-#        fifelse(bmi < 22, "normal",
-#               fifelse(bmi <= 24, "overweight", "obese"))))]
-
 # summary table
 chs %>%
   group_by(obesity_level) %>%
@@ -191,56 +188,102 @@ The primary questions of interest are: 1. What is the association between BMI an
 
 Follow the EDA checklist from week 3 and the previous assignment. Be sure to focus on the key variables. Visualization Create the following figures and interpret them. Be sure to include easily understandable axes, titles, and legends.
 
+### Check the dimensions, headers, footers, variable names and variable types.
 
+```{r data-info}
+dim(chs)
+head(chs)
+tail(chs)
+str(chs)
+```
 
+### Take a closer look at the key variables.
 
+```{r key-variables}
+table(chs$townname)
+summary(chs$bmi)
+summary(chs$fev)
+table(chs$smoke_gas_exposure)
+table(chs$"PM2.5 exposure ?????")
+```
 
 ## Step 1
 
 Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
 
 ```{r scatterplots}
-
+chs %>%
+  ggplot(mapping = aes(x = bmi, y = fev, color = townname)) + 
+  geom_jitter() + 
+  facet_grid(~townname)
 ```
 
-
+The scatter plot shows that Long Beach has the lowest FEV (forced expiatory volume) and Apline has the highest FEV (forced expiatory volume).
 
 ## Step 2
 
 Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
 
-```{r histograms}
+```{r histograms, warning=FALSE}
+# by BMI category
+chs %>%
+  ggplot(aes(y = fev, fill = obesity_level)) + 
+  geom_histogram(bins = 50)
 
+# by smoke/gas exposure
+chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
+  ggplot(aes(y = fev, fill = smoke_gas_exposure)) + 
+  geom_histogram(bins = 50)
 ```
 
-
+From the histograms, people of high BMI have the highest FEV (forced expiatory volume) while people who are underweight has the lowest. Plus, people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas are more likely to have the lowest FEV (forced expiatory volume).
 
 ## Step 3
 
 Barchart of BMI by smoke/gas exposure.
 
 ```{r Barchart}
-
+chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = smoke_gas_exposure, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity")
 ```
 
-
+From the barchart we can conclude that people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas are more likely to have the lowest FEV (forced expiatory volume).
 
 ## Step 4
 
 Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
 
 ```{r summary-graphs}
+chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = obesity_level, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity") + 
+  scale_fill_brewer(palette="Blues")
 
 ```
 
-
+Based on the summary bar plot of FEV by BMI and FEV by smoke/gas exposure category, people who are obese and exposed to gas have the highest FEV, while people who are underweight and exposed to both smoke and gas have the lowest FEV. We can also conclude that people who have normal BMI have higher FEV compared to people who have higher or lower BMI. Plus, people who are exposed to gas are more likely to have higher FEV compared to other groups.
 
 ## Step 5
 
 A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
 
 ```{r map}
-
+temp.pal <- colorNumeric(c('darkgreen','goldenrod','brown'), domain=chs$pm25_mass)
+if (knitr::is_html_output()) {
+leaflet(chs) %>%
+   addProviderTiles('CartoDB.Positron') %>%
+   addCircles(
+   lat = ~lat, lng=~lon,
+   label = ~paste0(round(pm25_mass,2), ' pm25_mass'), color = ~ temp.pal(pm25_mass),
+   opacity = 1, fillOpacity = 1, radius = 500
+     ) %>%
+   # And a pretty legend
+   addLegend('bottomleft', pal=temp.pal, values=chs$pm25_mass,
+           title='PM2.5 mass', opacity=1)
+} else {
+  message("Sorry! No HTML.")
+}
 ```
 
 
