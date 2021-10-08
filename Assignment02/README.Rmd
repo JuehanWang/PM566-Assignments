@@ -224,7 +224,7 @@ table(chs$"PM2.5 exposure ?????")
 
 Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
 
-```{r scatterplots, warning=FALSE}
+```{r scatterplots, warning=FALSE, message=FALSE}
 chs %>%
   ggplot(mapping = aes(x = bmi, y = fev, color = townname)) + 
   geom_jitter() + 
@@ -312,7 +312,7 @@ Based on the leaflet map, there is a concentration of high PM2.5 mass in each of
 
 Choose a visualization to examine whether PM2.5 mass is associated with FEV.
 
-```{r visualization-association, warning=FALSE}
+```{r visualization-association, warning=FALSE, message=FALSE}
 scatterplot <- ggplot(data = chs) + geom_point(mapping = aes(x = pm25_mass, y = fev)) +
   labs(title = "PM2.5 mass and FEV", x  = "PM2.5 mass", y = "FEV")
 lineplot    <- ggplot(data = chs) + geom_smooth(mapping = aes(x = pm25_mass, y = fev)) +
