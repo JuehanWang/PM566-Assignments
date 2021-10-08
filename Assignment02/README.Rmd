@@ -23,6 +23,7 @@ library(tidytext)
 library(tibble)
 library(dplyr)
 library(leaflet)
+library(cowplot)
 ```
 
 ## Learning objectives
@@ -140,47 +141,59 @@ summary(chs$smoke_gas_exposure)
 
 Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure”.
 
-```{r summary-tables}
+```{r summary-tables-town}
+chs <- data.table(chs)
+
 # summary by town
-chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
-  group_by(townname,asthma) %>%
-  summarise(mean_fev = mean(fev),
-            sd_fev = sd(fev),
-            n = n(),
-            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
-  mutate(prop = prop.table(n)) %>%
-  knitr::kable()
-
-# summary by sex
-chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
-  group_by(male,asthma) %>%
-  summarise(mean_fev = mean(fev),
-            sd_fev = sd(fev),
-            n = n(),
-            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
-  mutate(prop = prop.table(n)) %>%
-  knitr::kable()
-
-# summary by obesity level
-chs[-which(is.na(chs$asthma)!="FALSE"),] %>%
-  group_by(obesity_level,asthma) %>%
-  summarise(mean_fev = mean(fev),
-            sd_fev = sd(fev),
-            n = n(),
-            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
-  mutate(prop = prop.table(n)) %>%
-  knitr::kable()
-
-# summary by “smoke_gas_exposure”
-chs[-c(which(is.na(chs$smoke_gas_exposure)!="FALSE"),which(is.na(chs$asthma)!="FALSE")),] %>%
-  group_by(smoke_gas_exposure,asthma) %>%
-  summarise(mean_fev = mean(fev),
-            sd_fev = sd(fev),
-            n = n(),
-            sd_asthma = sd(asthma, na.rm = TRUE)) %>%
-  mutate(prop = prop.table(n)) %>%
-  knitr::kable()
+fev_town <- chs[ , .(
+  mean_fev = mean(fev, na.rm = TRUE),
+  sd_fev = sd(fev, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  sd_asthma = sd(asthma, na.rm = TRUE))
+, by = "townname"]
+knitr::kable(fev_town)
 ```
+
+Summarized by town, we find that FEV doesn't vary much in these 12 towns, among which the highest FEV is in Alpine (2087.83ml) while the lowest is in Riverside (1982.35ml). Meanwhile, the proportion of asthma in different towns are also quite similar except the highest on which is in Atascadero (25.51%).
+
+```{r summary-tables-sex}
+# summary by sex
+fev_sex <- chs[ , .(
+  mean_fev = mean(fev, na.rm = TRUE),
+  sd_fev = sd(fev, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  sd_asthma = sd(asthma, na.rm = TRUE))
+, by = "male"]
+knitr::kable(fev_sex)
+```
+
+Summarized by sex, we notice that both FEV and the proportion of asthma are similar in males and females, and they are both higher in males than in females. The average of FEV in males is 2104.26ml and is 1957.79ml in females. The proportion of asthma in males is 17.28 and is 12.08 in females.
+
+```{r summary-tables-obesity-level}
+# summary by obesity level
+fev_obesity_level <- chs[ , .(
+  mean_fev = mean(fev, na.rm = TRUE),
+  sd_fev = sd(fev, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  sd_asthma = sd(asthma, na.rm = TRUE))
+, by = "obesity_level"]
+knitr::kable(fev_obesity_level)
+```
+
+Summarized by obesity level, we can conclude that there is a positive association between BMI and FEV. The significance of the association needs to be explored in future analysis. The results show that people who are obese have both the highest mean FEV (2266.47ml) and the highest proportion of asthma (21%), while underweight people have both the lowest mean FEV (1699.07ml) and the lowest proportion of asthma (8.57%)
+
+```{r summary-tables-smoke-gas-exposure}
+# summary by “smoke_gas_exposure”
+fev_smoke_gas_exposure <- chs[-which(is.na(smoke_gas_exposure))][ , .(
+  mean_fev = mean(fev, na.rm = TRUE),
+  sd_fev = sd(fev, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  sd_asthma = sd(asthma, na.rm = TRUE))
+, by = "smoke_gas_exposure"]
+knitr::kable(fev_smoke_gas_exposure)
+```
+
+Summarized by obesity level, it shows that people who are exposed to smoke only have both the highest mean FEV (2062.95ml) and the highest proportion of asthma (17.14%), while people who are exposed to both smoke and gas have the lowest mean FEV (2019.12ml) and the lowest proportion of asthma (13.01%)
 
 ## II. Looking at the Data (EDA)
 
@@ -188,7 +201,7 @@ The primary questions of interest are: 1. What is the association between BMI an
 
 Follow the EDA checklist from week 3 and the previous assignment. Be sure to focus on the key variables. Visualization Create the following figures and interpret them. Be sure to include easily understandable axes, titles, and legends.
 
-### Check the dimensions, headers, footers, variable names and variable types.
+First, check the dimensions, headers, footers, variable names and variable types.
 
 ```{r data-info}
 dim(chs)
@@ -197,7 +210,7 @@ tail(chs)
 str(chs)
 ```
 
-### Take a closer look at the key variables.
+Then, take a closer look at the key variables.
 
 ```{r key-variables}
 table(chs$townname)
@@ -211,14 +224,16 @@ table(chs$"PM2.5 exposure ?????")
 
 Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
 
-```{r scatterplots}
+```{r scatterplots, warning=FALSE}
 chs %>%
   ggplot(mapping = aes(x = bmi, y = fev, color = townname)) + 
   geom_jitter() + 
-  facet_grid(~townname)
+  facet_grid(~townname) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "BMI vs FEV by town", x  = "BMI", y = "FEV")
 ```
 
-The scatter plot shows that Long Beach has the lowest FEV (forced expiatory volume) and Apline has the highest FEV (forced expiatory volume).
+The scatter plot shows that Long Beach has the lowest FEV and Apline has the highest FEV.
 
 ## Step 2
 
@@ -227,16 +242,20 @@ Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use dif
 ```{r histograms, warning=FALSE}
 # by BMI category
 chs %>%
-  ggplot(aes(y = fev, fill = obesity_level)) + 
-  geom_histogram(bins = 50)
+  ggplot(aes(x = fev, fill = obesity_level)) + 
+  geom_histogram(bins = 50) +
+ #facet_wrap( ~ obesity_level, nrow = 2) +
+  labs(title = "FEV by BMI category", x  = "FEV", y = "frequecy", fill = "BMI category")
 
 # by smoke/gas exposure
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
-  ggplot(aes(y = fev, fill = smoke_gas_exposure)) + 
-  geom_histogram(bins = 50)
+  ggplot(aes(x = fev, fill = smoke_gas_exposure)) + 
+  geom_histogram(bins = 50) +
+ #facet_wrap( ~ smoke_gas_exposure, nrow = 2) +
+  labs(title = "FEV by smoke/gas exposure category", x  = "FEV", y = "frequecy", fill = "smoke/gas exposure category")
 ```
 
-From the histograms, people of high BMI have the highest FEV (forced expiatory volume) while people who are underweight has the lowest. Plus, people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas are more likely to have the lowest FEV (forced expiatory volume).
+From the histograms, FEV is normally distributed in "normal", "obese" and "overweight" BMI categories, but it is not clear "underweight" category. FEV seems to be normally distributed in all smoke-exposed, gas-exposed, smoke-and-gas-exposed and neither-exposed categories.
 
 ## Step 3
 
@@ -245,10 +264,11 @@ Barchart of BMI by smoke/gas exposure.
 ```{r Barchart}
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
   ggplot() + 
-  geom_bar(mapping = aes(x = smoke_gas_exposure, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity")
+  geom_bar(mapping = aes(x = smoke_gas_exposure, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity") +
+  labs(title = "BMI by smoke/gas exposure category", x  = "smoke/gas exposure category", y = "FEV", fill = "smoke/gas exposure category")
 ```
 
-From the barchart we can conclude that people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas are more likely to have the lowest FEV (forced expiatory volume).
+From the barchart we can conclude that people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas have the lowest FEV (forced expiatory volume). And people who are neither exposed to smoke or gas have higher FEV than people who are only exposed to smoke.
 
 ## Step 4
 
@@ -258,11 +278,11 @@ Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
   ggplot() + 
   geom_bar(mapping = aes(x = obesity_level, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity") + 
-  scale_fill_brewer(palette="Blues")
-
+  scale_fill_brewer(palette="Blues") +
+  labs(title = "FEV by BMI and smoke/gas exposure category", x  = "BMI catogary", y = "FEV", fill = "smoke/gas exposure category")
 ```
 
-Based on the summary bar plot of FEV by BMI and FEV by smoke/gas exposure category, people who are obese and exposed to gas have the highest FEV, while people who are underweight and exposed to both smoke and gas have the lowest FEV. We can also conclude that people who have normal BMI have higher FEV compared to people who have higher or lower BMI. Plus, people who are exposed to gas are more likely to have higher FEV compared to other groups.
+Based on the summary bar plot of FEV by BMI and FEV by smoke/gas exposure category, people who have higher BMI and exposed to gas have the highest FEV, while people who have lower BMI and exposed to both smoke and gas have the lowest FEV. We can also conclude that people who have normal BMI have higher FEV compared to people who have higher or lower BMI. Plus, people who are exposed to gas are more likely to have higher FEV compared to other groups.
 
 ## Step 5
 
@@ -286,13 +306,18 @@ leaflet(chs) %>%
 }
 ```
 
-
+Based on the leaflet map, there is a concentration of high PM2.5 mass in each of the CHS communities.
 
 ## Step 6
 
 Choose a visualization to examine whether PM2.5 mass is associated with FEV.
 
-```{r visualization-association}
-
+```{r visualization-association, warning=FALSE}
+scatterplot <- ggplot(data = chs) + geom_point(mapping = aes(x = pm25_mass, y = fev)) +
+  labs(title = "PM2.5 mass and FEV", x  = "PM2.5 mass", y = "FEV")
+lineplot    <- ggplot(data = chs) + geom_smooth(mapping = aes(x = pm25_mass, y = fev)) +
+  labs(title = "PM2.5 mass and FEV", x  = "PM2.5 mass", y = "FEV")
+plot_grid(scatterplot, lineplot, labels = "AUTO")
 ```
 
+From the plot of PM2.5 mass and FEV, we can conclude that FEV decreases as PM2.5 mass increases. There seems to be a negative association between PM2.5 mass and FEV, but the significance needs to be explored in future analysis.
