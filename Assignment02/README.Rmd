@@ -242,17 +242,17 @@ Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use dif
 ```{r histograms, warning=FALSE}
 # by BMI category
 chs %>%
-  ggplot(aes(x = fev, fill = obesity_level)) + 
-  geom_histogram(bins = 50) +
+  ggplot(aes(x = fev, fill = obesity_level)) +
+  geom_histogram(bins = 55) +
  #facet_wrap( ~ obesity_level, nrow = 2) +
-  labs(title = "FEV by BMI category", x  = "FEV", y = "frequecy", fill = "BMI category")
+  labs(title = "FEV by BMI category", x  = "FEV", y = "Frequecy", fill = "BMI category")
 
 # by smoke/gas exposure
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
-  ggplot(aes(x = fev, fill = smoke_gas_exposure)) + 
-  geom_histogram(bins = 50) +
+  ggplot(aes(x = fev, fill = smoke_gas_exposure)) +
+  geom_histogram(bins = 55) +
  #facet_wrap( ~ smoke_gas_exposure, nrow = 2) +
-  labs(title = "FEV by smoke/gas exposure category", x  = "FEV", y = "frequecy", fill = "smoke/gas exposure category")
+  labs(title = "FEV by Smoke/gas exposure category", x  = "FEV", y = "Frequecy", fill = "Smoke/gas exposure category")
 ```
 
 From the histograms, FEV is normally distributed in "normal", "obese" and "overweight" BMI categories, but it is not clear "underweight" category. FEV seems to be normally distributed in all smoke-exposed, gas-exposed, smoke-and-gas-exposed and neither-exposed categories.
@@ -263,9 +263,9 @@ Barchart of BMI by smoke/gas exposure.
 
 ```{r Barchart}
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
-  ggplot() + 
+  ggplot() +
   geom_bar(mapping = aes(x = smoke_gas_exposure, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity") +
-  labs(title = "BMI by smoke/gas exposure category", x  = "smoke/gas exposure category", y = "FEV", fill = "smoke/gas exposure category")
+  labs(title = "BMI by Smoke/gas exposure category ", x  = "Smoke/gas exposure category", y = "FEV", fill = "smoke/gas exposure category")
 ```
 
 From the barchart we can conclude that people who are exposed to gas only have the highest FEV (forced expiatory volume) while people who are exposed to both smoke and gas have the lowest FEV (forced expiatory volume). And people who are neither exposed to smoke or gas have higher FEV than people who are only exposed to smoke.
@@ -276,10 +276,10 @@ Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
 
 ```{r summary-graphs}
 chs[-which(is.na(chs$smoke_gas_exposure)!="FALSE"),] %>%
-  ggplot() + 
+  ggplot() +
   geom_bar(mapping = aes(x = obesity_level, y = fev, fill = smoke_gas_exposure), position = "dodge", stat="identity") + 
   scale_fill_brewer(palette="Blues") +
-  labs(title = "FEV by BMI and smoke/gas exposure category", x  = "BMI catogary", y = "FEV", fill = "smoke/gas exposure category")
+  labs(title = "FEV by BMI and Smoke/gas exposure category", x  = "BMI catogary", y = "FEV", fill = "smoke/gas exposure category")
 ```
 
 Based on the summary bar plot of FEV by BMI and FEV by smoke/gas exposure category, people who have higher BMI and exposed to gas have the highest FEV, while people who have lower BMI and exposed to both smoke and gas have the lowest FEV. We can also conclude that people who have normal BMI have higher FEV compared to people who have higher or lower BMI. Plus, people who are exposed to gas are more likely to have higher FEV compared to other groups.
@@ -295,7 +295,7 @@ leaflet(chs) %>%
    addProviderTiles('CartoDB.Positron') %>%
    addCircles(
    lat = ~lat, lng=~lon,
-   label = ~paste0(round(pm25_mass,2), ' pm25_mass'), color = ~ temp.pal(pm25_mass),
+   label = ~paste0(round(pm25_mass,2), 'pm25_mass'), color = ~ temp.pal(pm25_mass),
    opacity = 1, fillOpacity = 1, radius = 500
      ) %>%
    # And a pretty legend
@@ -313,10 +313,10 @@ Based on the leaflet map, there is a concentration of high PM2.5 mass in each of
 Choose a visualization to examine whether PM2.5 mass is associated with FEV.
 
 ```{r visualization-association, warning=FALSE, message=FALSE}
-scatterplot <- ggplot(data = chs) + geom_point(mapping = aes(x = pm25_mass, y = fev)) +
-  labs(title = "PM2.5 mass and FEV", x  = "PM2.5 mass", y = "FEV")
-lineplot    <- ggplot(data = chs) + geom_smooth(mapping = aes(x = pm25_mass, y = fev)) +
-  labs(title = "PM2.5 mass and FEV", x  = "PM2.5 mass", y = "FEV")
+scatterplot <- ggplot(data = chs) + geom_point(mapping = aes(x = pm25_mass, y = fev)) + 
+  labs(title = "PM2.5 mass vs. FEV", x  = "PM2.5 mass", y = "FEV")
+lineplot    <- ggplot(data = chs) + geom_smooth(mapping = aes(x = pm25_mass, y = fev)) + 
+  labs(title = "PM2.5 mass vs. FEV", x  = "PM2.5 mass", y = "FEV")
 plot_grid(scatterplot, lineplot, labels = "AUTO")
 ```
 
