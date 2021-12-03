@@ -1,0 +1,13 @@
+name: "Association between COVID-19 Deaths and Fully Vaccined Status"
+output_dir: "."
+navbar:
+  title: "Juehan's Website"
+  left:
+    - text: "Background"
+      href: BG.html
+    - text: "Assignment 5"
+      href: index.html
+output:
+  html_document:
+    theme: paper
+

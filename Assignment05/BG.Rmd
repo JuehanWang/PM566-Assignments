@@ -1,0 +1,56 @@
+---
+title: "Background"
+author: "Juehan Wang"
+output: 
+    html_document:
+        toc: TRUE
+        toc_float: TRUE
+---
+
+# Overview of COVID-19
+
+Coronavirus disease 2019 (COVID-19) is a contagious disease caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2). The first known case was identified in Wuhan, China, in December 2019. The disease has since spread worldwide, leading to an ongoing pandemic.
+
+Symptoms of COVID-19 are variable, but often include fever, cough, headache, fatigue, breathing difficulties, and loss of smell and taste. Symptoms may begin one to fourteen days after exposure to the virus. At least a third of people who are infected do not develop noticeable symptoms. Of those people who develop symptoms noticeable enough to be classed as patients, most (81%) develop mild to moderate symptoms (up to mild pneumonia), while 14% develop severe symptoms (dyspnea, hypoxia, or more than 50% lung involvement on imaging), and 5% suffer critical symptoms (respiratory failure, shock, or multiorgan dysfunction). Older people are at a higher risk of developing severe symptoms. Some people continue to experience a range of effects (long COVID) for months after recovery, and damage to organs has been observed. Multi-year studies are underway to further investigate the long-term effects of the disease.
+
+COVID-19 transmits when people breathe in air contaminated by droplets and small airborne particles containing the virus. The risk of breathing these in is highest when people are in close proximity, but they can be inhaled over longer distances, particularly indoors. Transmission can also occur if splashed or sprayed with contaminated fluids in the eyes, nose or mouth, and, rarely, via contaminated surfaces. People remain contagious for up to 20 days, and can spread the virus even if they do not develop symptoms.
+
+Several testing methods have been developed to diagnose the disease. The standard diagnostic method is by detection of the virus' nucleic acid by real-time reverse transcription polymerase chain reaction (rRT-PCR), transcription-mediated amplification (TMA), or by reverse transcription loop-mediated isothermal amplification (RT-LAMP) from a nasopharyngeal swab.
+
+Several COVID-19 vaccines have been approved and distributed in various countries, which have initiated mass vaccination campaigns. Other preventive measures include physical or social distancing, quarantining, ventilation of indoor spaces, covering coughs and sneezes, hand washing, and keeping unwashed hands away from the face. The use of face masks or coverings has been recommended in public settings to minimize the risk of transmissions. While work is underway to develop drugs that inhibit the virus, the primary treatment is symptomatic. Management involves the treatment of symptoms, supportive care, isolation, and experimental measures.
+
+# Key Things to Know About COVID-19 Vaccines
+
+## Availability of Vaccines
+
+COVID-19 vaccines are widely accessible in the United States. Everyone ages 5 years and older should get a COVID-19 vaccination as soon as possible. COVID-19 vaccines are available for everyone at no cost, regardless of their immigration or health insurance status.
+
+Many doctors’ offices, retail pharmacies, hospitals, and clinics offer COVID-19 vaccinations. Visit vaccines.gov to find locations that are offering vaccines to everyone ages 5 years and older. Parents can check with their child’s healthcare provider, their local pharmacy, and health department about whether they offer COVID-19 vaccination. Learn more about how to find a COVID-19 vaccine.
+
+## Effectiveness
+
+Studies show that COVID-19 vaccines are effective, especially at keeping adults and children from getting seriously ill even if they do get COVID-19. Learn more about the benefits of getting vaccinated.
+
+COVID-19 vaccines teach our immune systems how to recognize and fight the virus that causes COVID-19. It typically takes 2 weeks after vaccination for the body to build protection (immunity) against the virus that causes COVID-19.
+
+People are considered fully vaccinated 2 weeks after their second dose of the Pfizer-BioNTech or Moderna COVID-19 vaccines, or 2 weeks after the single-dose Johnson & Johnson’s Janssen COVID-19 vaccine. To receive the most protection, people should receive all recommended doses of a COVID-19 vaccine. Learn more about who is recommended to get an additional primary dose or a booster dose.
+
+People can sometimes get COVID-19 after being fully vaccinated. However, this only happens in a small proportion of people, even with the Delta variant. When these infections occur among vaccinated people, they tend to be mild.
+
+## Safety
+
+COVID-19 vaccines are safe and effective. Millions of people in the United States have received COVID-19 vaccines. COVID-19 vaccines have undergone and continue to undergo the most intensive safety monitoring in U.S. history, which includes studies about adolescents and children. This monitoring includes using both established and new safety monitoring systems icon to make sure that COVID-19 vaccines are safe.
+
+Before recommending COVID-19 vaccination for children, scientists conducted clinical trials. The FDA gave the Pfizer-BioNTech COVID-19 vaccine emergency authorization to use in children ages 5 years through 15 years old and full approval to use in people ages 16 years and older. Learn more about the process of developing, authorizing and approving COVID-19 vaccines.
+
+COVID-19 vaccines cannot give you COVID-19. There is no evidence that COVID-19 vaccines cause fertility problems. Read more to bust myths and learn the facts about COVID-19 vaccines.
+
+CDC has developed a tool, v-safe, to help monitor how people are feeling after getting COVID-19 vaccines. V-safe is a free, easy-to-use, and confidential smartphone-based tool that uses text messaging and web surveys to provide personalized health check-ins after vaccination. Parents and caregivers can enroll themselves and their children ages 5 years and older in v-safe and report how they are feeling after they have been vaccinated for COVID-19. Learn how the federal government is using v-safe and other systems to monitor and ensure the safety of COVID-19 vaccines.
+
+While COVID-19 vaccines were developed rapidly,all steps have been taken to ensure their safety and effectiveness.
+
+# References
+
+COVID-19, Wikipedia https://en.wikipedia.org/wiki/COVID-19
+
+COVID-19 Vaccines, CDC https://www.cdc.gov/coronavirus/2019-ncov/vaccines/keythingstoknow.html?s_cid=10493:covid%2019%20vaccine:sem.ga:p:RG:GM:gen:PTN:FY21
